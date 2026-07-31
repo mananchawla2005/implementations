@@ -153,7 +153,7 @@ python experiments/<algorithm>/<test_name>.py
 | `one_channel_reset.py` | A single channel can be reset while others persist |
 | `anisotropic_forgetting.py` | High alpha forgets slow, low alpha fast |
 | `multi_timescale.py` | Half-lives match theory for different alphas |
-| `rotated_associations.py` | Rotated keys — decay in one dim damages the other |
+| `rotated_associations.py` | Rotated keys decay in one dim damages the other |
 | `scalar_vs_channel.py` | Per-channel decay beats any single scalar gate |
 
 ### Gated DeltaNet-2
