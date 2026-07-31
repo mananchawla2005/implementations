@@ -11,6 +11,7 @@ from algorithms.inference import (
     GatedAdditive,
     DeltaNet,
     GatedDeltaNet,
+    KimiDeltaAttention,
 )
 from shared.plotting import plot_times
 
@@ -25,6 +26,7 @@ model_classes = [
     ("GatedAdditive", GatedAdditive),
     ("DeltaNet", DeltaNet),
     ("GatedDeltaNet", GatedDeltaNet),
+    ("KimiDelta", KimiDeltaAttention),
 ]
 
 all_times = {}

@@ -10,6 +10,7 @@ from algorithms.inference import (
     GatedAdditive,
     DeltaNet,
     GatedDeltaNet,
+    KimiDeltaAttention,
 )
 
 d_k = 4
@@ -27,6 +28,7 @@ models = {
     "GatedAdditive": GatedAdditive(d_k, d_v),
     "DeltaNet": DeltaNet(d_k, d_v),
     "GatedDeltaNet": GatedDeltaNet(d_k, d_v),
+    "KimiDelta": KimiDeltaAttention(d_k, d_v),
 }
 
 values = [v1, v2, v3]
@@ -53,5 +55,6 @@ for name, model in models.items():
         "GatedAdditive": "decayed mixture",
         "DeltaNet": "exact replacement",
         "GatedDeltaNet": "replacement + decay",
+        "KimiDelta": "replacement + channel decay",
     }[name]
     print(f"{name:>16} | {mses[0]:>13.6f}  | {mses[1]:>13.6f}  | {mses[2]:>13.6f}  | {desc:>30}")

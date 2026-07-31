@@ -95,3 +95,53 @@ class GatedDeltaNet(MemoryModel):
         prediction = alpha * (self.state @ key)
         self.state = alpha * self.state + beta * torch.outer(value - prediction, key)
         return self.state @ query
+
+
+class KimiDeltaAttention(MemoryModel):
+    def __init__(self, d_k, d_v):
+        self.d_k = d_k
+        self.d_v = d_v
+        self.reset()
+
+    def reset(self):
+        self.state = torch.zeros(self.d_k, self.d_v)
+
+    def step(self, query, key, value, **controls):
+        alpha = controls.get("alpha", torch.ones(self.d_k))
+        beta = controls.get("beta", 1.0)
+        if not torch.is_tensor(alpha):
+            alpha = torch.full((self.d_k,), alpha)
+        key = F.normalize(key.unsqueeze(0), 2, 1).squeeze(0)
+        decayed = alpha.unsqueeze(-1) * self.state
+        prediction = decayed.T @ key
+        error = value - prediction
+        self.state = decayed + beta * torch.outer(key, error)
+        return self.state.T @ query
+
+
+class GatedDeltaAttention2(MemoryModel):
+    def __init__(self, d_k, d_v):
+        self.d_k = d_k
+        self.d_v = d_v
+        self.reset()
+
+    def reset(self):
+        self.state = torch.zeros(self.d_k, self.d_v)
+
+    def step(self, query, key, value, **controls):
+        alpha = controls.get("alpha", torch.ones(self.d_k))
+        erase_gate = controls.get("erase_gate", torch.ones(self.d_k))
+        write_gate = controls.get("write_gate", torch.ones(self.d_v))
+        beta = controls.get("beta", 1.0)
+        if not torch.is_tensor(alpha):
+            alpha = torch.full((self.d_k,), alpha)
+        if not torch.is_tensor(erase_gate):
+            erase_gate = torch.full((self.d_k,), erase_gate)
+        if not torch.is_tensor(write_gate):
+            write_gate = torch.full((self.d_v,), write_gate)
+        key = F.normalize(key.unsqueeze(0), 2, 1).squeeze(0)
+        decayed = alpha.unsqueeze(-1) * self.state
+        prediction = decayed.T @ (erase_gate * key)
+        error = write_gate * value - prediction
+        self.state = decayed + beta * torch.outer(key, error)
+        return self.state.T @ query

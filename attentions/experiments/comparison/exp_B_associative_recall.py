@@ -10,6 +10,7 @@ from algorithms.inference import (
     GatedAdditive,
     DeltaNet,
     GatedDeltaNet,
+    KimiDeltaAttention,
 )
 
 N_values = [2, 4, 8, 16, 32, 64]
@@ -22,6 +23,7 @@ model_classes = [
     ("GatedAdditive", GatedAdditive),
     ("DeltaNet", DeltaNet),
     ("GatedDeltaNet", GatedDeltaNet),
+    ("KimiDelta", KimiDeltaAttention),
 ]
 
 results = {}

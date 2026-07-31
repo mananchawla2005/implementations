@@ -10,6 +10,7 @@ from algorithms.inference import (
     GatedAdditive,
     DeltaNet,
     GatedDeltaNet,
+    KimiDeltaAttention,
 )
 
 nA = 20
@@ -32,6 +33,7 @@ model_classes = [
     ("GatedAdditive", GatedAdditive),
     ("DeltaNet", DeltaNet),
     ("GatedDeltaNet", GatedDeltaNet),
+    ("KimiDelta", KimiDeltaAttention),
 ]
 
 results = {}
@@ -42,7 +44,7 @@ for name, cls in model_classes:
         model.step(keys_A[i], keys_A[i], vals_A[i], alpha=1.0, beta=1.0)
 
     for i in range(nB):
-        alpha = 0.1 if "Gated" in name else 1.0
+        alpha = 0.1 if ("Gated" in name or "Kimi" in name) else 1.0
         model.step(keys_B[i], keys_B[i], vals_B[i], alpha=alpha, beta=1.0)
 
     recall_B = 0.0
