@@ -10,7 +10,7 @@ def gated_delta_attention2_recurrent(
     write_gates: torch.Tensor,   # [T, d_v]
     eps: float = 1e-8, 
     initial_state: torch.Tensor = None,
-) -> torch.Tensor:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Return:
         outputs: [T, d_v]

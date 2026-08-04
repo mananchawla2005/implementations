@@ -2,7 +2,7 @@ import torch
 
 def gated_linear_attention(
     queries: torch.Tensor, keys: torch.Tensor, values: torch.Tensor, alphas: torch.Tensor
-) -> torch.Tensor:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Return:
         outputs: [T, d_v]

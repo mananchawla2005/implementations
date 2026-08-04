@@ -63,7 +63,7 @@ def delta_attention_recurrent(
     values: torch.Tensor,
     betas: torch.Tensor,
     eps: float = 1e-8,
-) -> torch.Tensor:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Return:
         outputs: [T, d_v]

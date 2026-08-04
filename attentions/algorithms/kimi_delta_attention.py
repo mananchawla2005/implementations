@@ -9,7 +9,7 @@ def kimi_delta_attention_recurrent(
     betas: torch.Tensor,
     eps: float = 1e-8,
     initial_state: torch.Tensor = None,
-) -> torch.Tensor:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Return:
         outputs: [T, d_v]

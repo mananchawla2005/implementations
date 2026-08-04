@@ -63,7 +63,7 @@ def gated_delta_attention_parallel(
     betas: torch.Tensor,
     alphas: torch.Tensor,
     eps: float = 1e-8,
-) -> torch.Tensor:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Return:
         outputs: [T, d_v]

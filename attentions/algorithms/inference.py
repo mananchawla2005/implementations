@@ -145,3 +145,28 @@ class GatedDeltaAttention2(MemoryModel):
         error = write_gate * value - prediction
         self.state = decayed + beta * torch.outer(key, error)
         return self.state.T @ query
+
+
+class SparseDeltaMemory(MemoryModel):
+    def __init__(self, memory_size, d_v):
+        self.memory_size = memory_size
+        self.d_v = d_v
+        self.reset()
+
+    def reset(self):
+        self.memory = torch.zeros(self.memory_size, self.d_v)
+
+    def step(self, query, key, value, **controls):
+        query_indices = controls["query_indices"]  # [R] slots to read
+        key_indices = controls["key_indices"]      # [W] slots to write
+        alpha = controls.get("alpha", 1.0)
+        beta = controls.get("beta", 1.0)
+        key = F.normalize(key.unsqueeze(0), 2, 1).squeeze(0)
+        decayed = self.memory.clone()
+        old_values = decayed[key_indices]
+        new_values = alpha * old_values
+        prediction = key @ new_values
+        error = value - prediction
+        decayed[key_indices] = new_values + beta * key.unsqueeze(-1) * error.unsqueeze(0)
+        self.memory = decayed
+        return (query.unsqueeze(-1) * self.memory[query_indices]).sum(dim=0)

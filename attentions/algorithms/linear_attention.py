@@ -27,7 +27,7 @@ def linear_attention_recurrent(
 
 def linear_attention_parallel(
     queries: torch.Tensor, keys: torch.Tensor, values: torch.Tensor
-) -> torch.Tensor:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Return:
         outputs: [T, d_v]
