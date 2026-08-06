@@ -170,3 +170,59 @@ class SparseDeltaMemory(MemoryModel):
         decayed[key_indices] = new_values + beta * key.unsqueeze(-1) * error.unsqueeze(0)
         self.memory = decayed
         return (query.unsqueeze(-1) * self.memory[query_indices]).sum(dim=0)
+
+
+def rms_norm(x, eps=1e-8):
+    return x / (x.norm(dim=-1, keepdim=True) / x.shape[-1] ** 0.5 + eps)
+
+
+class HippocampusLinearAttention(MemoryModel):
+    def __init__(self, d_k, d_v, capacity, sink_logit=0.0):
+        self.d_k = d_k
+        self.d_v = d_v
+        self.capacity = capacity
+        self.sink_logit = sink_logit
+        self.reset()
+
+    def reset(self):
+        self.state = torch.zeros(self.d_k, self.d_v)
+        self.cache_keys = torch.zeros(0, self.d_k)
+        self.cache_values = torch.zeros(0, self.d_v)
+        self.cache_scores = torch.zeros(0)
+
+    def step(self, query, key, value, **controls):
+        alpha = controls.get("alpha", torch.ones(self.d_k))
+        beta = controls.get("beta", 1.0)
+        cache_gate = controls.get("cache_gate", 1.0)
+        if not torch.is_tensor(alpha):
+            alpha = torch.full((self.d_k,), alpha)
+
+        state_key = F.normalize(key.unsqueeze(0), 2, 1).squeeze(0)
+        decayed = alpha.unsqueeze(-1) * self.state
+        prediction = decayed.T @ state_key
+        error = value - prediction
+        surprise = error.norm().item()
+        self.state = decayed + beta * torch.outer(state_key, error)
+        state_out = self.state.T @ query
+
+        cache_out = torch.zeros(self.d_v)
+        if len(self.cache_keys) > 0:
+            logits = rms_norm(query) @ self.cache_keys.T / (self.d_k ** 0.5)
+            logits = torch.cat([logits, torch.full((1,), self.sink_logit)])
+            w = torch.softmax(logits, -1)
+            cache_out = w[:-1] @ self.cache_values
+
+        if beta != 0.0: 
+            cache_key = rms_norm(key)
+            self.cache_keys = torch.cat([self.cache_keys, cache_key.unsqueeze(0)])
+            self.cache_values = torch.cat([self.cache_values, value.unsqueeze(0)])
+            self.cache_scores = torch.cat([self.cache_scores, torch.tensor([surprise])])
+            if len(self.cache_scores) > self.capacity:
+                drop = self.cache_scores.argmin()
+                keep = torch.ones(len(self.cache_scores), dtype=torch.bool)
+                keep[drop] = False
+                self.cache_keys = self.cache_keys[keep]
+                self.cache_values = self.cache_values[keep]
+                self.cache_scores = self.cache_scores[keep]
+
+        return state_out + cache_gate * cache_out
